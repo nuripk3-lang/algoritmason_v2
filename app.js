@@ -1114,7 +1114,7 @@ ekgList: [
         { isim: "Anterior MI", link: "img/ant.jpg" },
         { isim: "Inferior MI", link: "img/nfr.jpg" },
         { isim: "Lateral MI", link: "img/lateralmı.jpg" },
-        { isim: "ST Segment Analizi", link: "img/STSEGMENT.jpg" }
+        { isim: "ST Segment Analizi", link: "img/stsegment.jpg" }
     ],
 
 steps: [
