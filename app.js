@@ -1782,6 +1782,17 @@ function tahminiKiloHesapla() {
   
   if (!deger || deger < 0) return;
 
+  // SINIR KONTROLLERI
+  if (tip === "ay" && (deger < 0 || deger > 12)) {
+    alert("⚠️ Ay değeri 0-12 arasında olmalıdır!");
+    return;
+  }
+  
+  if (tip === "yil" && (deger < 0 || deger > 15)) {
+    alert("⚠️ Yaş değeri 0-15 yıl arasında olmalıdır!");
+    return;
+  }
+
   let hesaplananKilo = 0;
 
   if (tip === "ay") {
@@ -1792,10 +1803,13 @@ function tahminiKiloHesapla() {
     // 6 - 12 Yaş: (Yaş × 3) + 7
     if (deger >= 1 && deger <= 5) {
       hesaplananKilo = (deger * 2) + 8;
-    } else if (deger > 5) {
+    } else if (deger > 5 && deger <= 15) {
       hesaplananKilo = (deger * 3) + 7;
     }
   }
+
+  // Hesaplanan kiloyu da sınırla
+  hesaplananKilo = Math.max(0.5, Math.min(hesaplananKilo, 100));
 
   if (hesaplananKilo > 0) {
     kiloInput.value = hesaplananKilo.toFixed(1);
@@ -1806,7 +1820,20 @@ function tahminiKiloHesapla() {
 function hesaplaCocukDoz() {
   const kg = parseFloat(document.getElementById("kiloInput").value);
   const res = document.getElementById("dozSonuc");
-  if (!kg || kg <= 0) { res.innerHTML = ""; return; }
+  
+  // SINIR KONTROLLERI
+  if (!kg || kg <= 0) { 
+    res.innerHTML = ""; 
+    return; 
+  }
+  
+  if (kg < 0.5 || kg > 100) {
+    res.innerHTML = `<div style="color: red; text-align: center; padding: 20px; background: #fff; border-radius: 12px; border: 2px solid red;">
+      ⚠️ Kilo değeri 0.5-100 kg arasında olmalıdır!<br>
+      <small>Lütfen gerçekçi bir değer giriniz.</small>
+    </div>`;
+    return;
+  }
 
   // Tema kontrolü - gece modunda siyah yazı + beyaz arka plan
   const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -2826,6 +2853,29 @@ function calculatePediatric() {
     let yas = parseFloat(yasInput) || 0;
     let ay = parseFloat(ayInput) || 0;
 
+    // --- KİLO SINIRI KONTROLÜ ---
+    if (kilo && (kilo < 0.5 || kilo > 100)) {
+        resultArea.innerHTML = `<div style="color: red; text-align: center; padding: 20px;">
+            ⚠️ Kilo değeri 0.5-100 kg arasında olmalıdır!
+        </div>`;
+        return;
+    }
+
+    // --- YAŞ SINIRI KONTROLÜ ---
+    if (yas && (yas < 0 || yas > 15)) {
+        resultArea.innerHTML = `<div style="color: red; text-align: center; padding: 20px;">
+            ⚠️ Yaş değeri 0-15 yıl arasında olmalıdır!
+        </div>`;
+        return;
+    }
+
+    if (ay && (ay < 0 || ay > 12)) {
+        resultArea.innerHTML = `<div style="color: red; text-align: center; padding: 20px;">
+            ⚠️ Ay değeri 0-12 ay arasında olmalıdır!
+        </div>`;
+        return;
+    }
+
     // --- 1. KİLO TAHMİN FORMÜLLERİ ---
     if (!kilo) {
         if (ay > 0 && yas === 0) {
@@ -2833,7 +2883,7 @@ function calculatePediatric() {
             yas = ay / 12;
         } else if (yas >= 1 && yas <= 5) {
             kilo = (yas * 2) + 8;
-        } else if (yas >= 6 && yas <= 12) {
+        } else if (yas >= 6 && yas <= 15) {
             kilo = (yas * 3) + 7;
         }
     }
@@ -2845,7 +2895,7 @@ function calculatePediatric() {
         yas = kilo <= 10 ? (kilo * 2 - 9) / 12 : (kilo <= 18 ? (kilo - 8) / 2 : (kilo - 7) / 3);
     }
 
-    // --- 2. VİTAL VE EKİPMAN HESAPLARI ---
+    // --- 2. VİTAL VE EKİPMAN HESAPLARI (SINIRLI) ---
     let v = { n: "100-160", s: "40-60", tans: "60-90" };
     if (yas >= 0.1) v = { n: "100-150", s: "30-50", tans: "70-100" };
     if (yas >= 1) v = { n: "80-130", s: "24-40", tans: "80-110" };
@@ -2853,11 +2903,14 @@ function calculatePediatric() {
     if (yas >= 7) v = { n: "70-110", s: "16-24", tans: "90-120" };
     if (yas >= 13) v = { n: "60-100", s: "12-20", tans: "110-130" };
     
-    const hipo = 70 + (Math.floor(yas) * 2);
-    const kafli = (yas / 4) + 3.5;
-    const derinlik = (yas / 2) + 12;
-
+    // Hipotansiyon sınırı: 10 yaşından sonra sabit 90 mmHg
+    const hipo = yas >= 10 ? 90 : Math.min(70 + (Math.floor(yas) * 2), 90);
     
+    // ENTÜBASYON TÜPÜ SINIRLI HESAPLAMA
+    let kafli = (yas / 4) + 3.5;
+    kafli = Math.max(3.0, Math.min(kafli, 9.0)); // 3.0-9.0 arası sınırla
+    
+    const derinlik = Math.max(10, Math.min((yas / 2) + 12, 25)); // 10-25 cm arası
 
     // Tema kontrolü - gece modunda siyah yazı + beyaz arka plan
     const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
